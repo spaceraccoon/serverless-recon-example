@@ -1,39 +1,37 @@
 package main
 
 import (
-    "github.com/aws/aws-sdk-go/aws"
-    "github.com/aws/aws-sdk-go/aws/session"
-    "github.com/aws/aws-sdk-go/service/lambda"
-    
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/lambda"
+
 	"encoding/json"
 	"flag"
-    "fmt"
-    "os"
-    "strconv"
+	"fmt"
+	"os"
 )
 
 type crtShRequest struct {
-    Domain string `json:"domain"`
-}
-
-type crtShResponseBody struct {
-	Error		 string	  `json:"error"`
-    Subdomains   []string `json:"subdomains"`
+	Domain string `json:"domain"`
 }
 
 type crtShResponse struct {
-    StatusCode int                  `json:"statusCode"`
-    Body       crtShResponseBody    `json:"body"`
+	Subdomains []string `json:"subdomains"`
+}
+
+type FunctionError struct {
+	ErrorMessage string `json:"errorMessage"`
+	ErrorType    string `json:"errorType"`
 }
 
 func main() {
 	awsRegion := flag.String("region", "", "optional: set aws region")
 	flag.Parse()
 
-    // Create Lambda service client
-    sess := session.Must(session.NewSessionWithOptions(session.Options{
-        SharedConfigState: session.SharedConfigEnable,
-    }))
+	// Create Lambda service client
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
 
 	var client *lambda.Lambda
 
@@ -46,44 +44,52 @@ func main() {
 	var domain string
 
 	if domain = flag.Arg(0); domain == "" {
-        fmt.Println("Missing domain argument")
-        os.Exit(0)
-    }
+		fmt.Println("Missing domain argument")
+		os.Exit(1)
+	}
 
-    request := crtShRequest{domain}
+	request := crtShRequest{domain}
 
-    payload, err := json.Marshal(request)
-    if err != nil {
-        fmt.Println("Error marshalling CrtShFunction request")
-        os.Exit(0)
-    }
+	payload, err := json.Marshal(request)
+	if err != nil {
+		fmt.Println("Error marshalling CrtShFunction request")
+		os.Exit(1)
+	}
 
-    result, err := client.Invoke(&lambda.InvokeInput{FunctionName: aws.String("CrtShFunction"), Payload: payload})
-    if err != nil {
-        fmt.Println("Error calling CrtShFunction")
-        os.Exit(0)
-    }
+	result, err := client.Invoke(&lambda.InvokeInput{FunctionName: aws.String("CrtShFunction"), Payload: payload})
+	if err != nil {
+		fmt.Println("Error calling CrtShFunction")
+		os.Exit(1)
+	}
 
-    var resp crtShResponse
+	var resp crtShResponse
 
-    err = json.Unmarshal(result.Payload, &resp)
-    if err != nil {
-        fmt.Println("Error unmarshalling CrtShFunction response")
-        os.Exit(0)
-    }
+	err = json.Unmarshal(result.Payload, &resp)
+	if err != nil {
+		fmt.Println("Error unmarshalling CrtShFunction response")
+		os.Exit(1)
+	}
 
-    // If the status code is NOT 200, the call failed
-    if resp.StatusCode != 200 {
-        fmt.Println(strconv.Itoa(resp.StatusCode) + ": " + resp.Body.Error)
-        os.Exit(0)
-    }
+	var functionError FunctionError
 
-    // Print out subdomains
-    if len(resp.Body.Subdomains) > 0 {
-        for i := range resp.Body.Subdomains {
-            fmt.Println(resp.Body.Subdomains[i])
-        }
-    } else {
-        fmt.Println("There were no subdomains")
-    }
+	// If the status code is NOT 200, the call failed
+	if result.FunctionError != nil {
+		err = json.Unmarshal(result.Payload, &functionError)
+		if err != nil {
+			fmt.Println("Error unmarshalling FunctionError")
+			os.Exit(1)
+		}
+
+		fmt.Println(functionError.ErrorMessage)
+		os.Exit(1)
+	}
+
+	// Print out subdomains
+	if len(resp.Subdomains) > 0 {
+		for i := range resp.Subdomains {
+			fmt.Println(resp.Subdomains[i])
+		}
+	} else {
+		fmt.Println("There were no subdomains")
+	}
 }

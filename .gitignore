@@ -1,9 +1,11 @@
-# Build
+# SAM Build
 .aws-sam/
 
-# Deploy
+# SAM Deploy
 samconfig.toml
 
+# Go Build
+serverless-recon-example
 
 # Created by https://www.gitignore.io/api/osx,linux,python,windows,pycharm,visualstudiocode,go
 # Edit at https://www.gitignore.io/?templates=osx,linux,python,windows,pycharm,visualstudiocode,go
