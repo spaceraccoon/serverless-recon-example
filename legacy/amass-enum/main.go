@@ -15,8 +15,8 @@ import (
 var (
 	// ErrNoDomain no domain in event payload
 	ErrNoDomain = errors.New("No domain in event payload")
-	// ErrFailedEnum failed to initialize new enumeration
-	ErrFailedEnum = errors.New("Failed to initialize enumeration")
+	// ErrFailedEnum failed to setup the enumeration
+	ErrFailedEnum = errors.New("Failed to setup the enumeration")
 )
 
 type amassEnumRequest struct {
@@ -38,8 +38,9 @@ func handler(request amassEnumRequest) (amassEnumResponse, error) {
 	// Setup the most basic amass configuration
 	cfg := config.NewConfig()
 	cfg.AddDomain(request.Domain)
-	cfg.Active = true
+	cfg.Passive = true
 	cfg.Timeout = 14
+	cfg.LocalDatabase = false
 
 	sys, err := systems.NewLocalSystem(cfg)
 	if err != nil {

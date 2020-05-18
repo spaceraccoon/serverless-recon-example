@@ -3,6 +3,6 @@ require (
 	github.com/lib/pq v1.5.2
 )
 
-module crt-sh
+module crtsh
 
 go 1.14
