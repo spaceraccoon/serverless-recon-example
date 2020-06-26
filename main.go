@@ -93,8 +93,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// uniqueSubdomains = invokeFunction(domain, uniqueSubdomains, client, "CrtShFunction", payload)
-	uniqueSubdomains = invokeFunction(domain, uniqueSubdomains, client, "AmassEnumFunction", payload)
+	uniqueSubdomains = invokeFunction(domain, uniqueSubdomains, client, "CrtShFunction", payload)
 
 	for subdomain := range uniqueSubdomains {
 		fmt.Println(subdomain)
