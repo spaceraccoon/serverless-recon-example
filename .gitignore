@@ -1,5 +1,6 @@
 # SAM Build
 .aws-sam/
+template.yaml
 
 # SAM Deploy
 samconfig.toml

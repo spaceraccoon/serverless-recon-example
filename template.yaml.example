@@ -1,0 +1,113 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  serverless-recon-example
+
+  SAM Template for serverless-recon-example
+
+Globals:
+  Function:
+    Timeout: 900
+
+Resources:
+  AlienVaultFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: sources/alienvault/
+      FunctionName: AlienVaultFunction
+      Handler: alienvault
+      Runtime: go1.x
+  AmassEnumFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: legacy/amass-enum/
+      FunctionName: AmassEnumFunction
+      Handler: amass-enum
+      MemorySize: 320
+      Runtime: go1.x
+  CensysFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: sources/censys/
+      Environment:
+        Variables:
+          API_KEY_PATH: /serverlessReconExample/censys/apiKey
+      FunctionName: CensysFunction
+      Handler: censys
+      Role: !GetAtt CensysFunctionRole.Arn
+      Runtime: go1.x
+  CrtShFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: sources/crtsh/
+      FunctionName: CrtShFunction
+      Handler: crtsh
+      Runtime: go1.x
+  Sublist3rFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: sources/sublist3r/
+      FunctionName: Sublist3rFunction
+      Handler: sublist3r
+      Runtime: go1.x
+  
+  CensysFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        -
+          PolicyName: CensysParameterAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - ssm:GetParameter*
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverlessReconExample/censys/*
+              
+  CensysApiKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: Censys API Key
+      Name: /serverlessReconExample/censys/apiKey
+      Type: String
+      Value: '{"id": "","secret": ""}'
+
+Outputs:
+  AlienVaultFunction:
+    Description: AlienVaultFunction ARN
+    Value: !GetAtt AlienVaultFunction.Arn
+  AlienVaultFunctionIamRole:
+    Description: Implicit IAM Role created for AlienVaultFunction
+    Value: !GetAtt AlienVaultFunctionRole.Arn
+  AmassEnumFunction:
+    Description: AmassEnumFunction ARN
+    Value: !GetAtt AmassEnumFunction.Arn
+  AmassEnumFunctionIamRole:
+    Description: Implicit IAM Role created for AmassEnumFunction
+    Value: !GetAtt AmassEnumFunctionRole.Arn
+  CrtShFunction:
+    Description: CrtShFunction ARN
+    Value: !GetAtt CrtShFunction.Arn
+  CrtShFunctionIamRole:
+    Description: Implicit IAM Role created for CrtShFunction
+    Value: !GetAtt CrtShFunctionRole.Arn
+  Sublist3rFunction:
+    Description: CrtShFunction ARN
+    Value: !GetAtt CrtShFunction.Arn
+  Sublist3rFunctionIamRole:
+    Description: Implicit IAM Role created for CrtShFunction
+    Value: !GetAtt CrtShFunctionRole.Arn

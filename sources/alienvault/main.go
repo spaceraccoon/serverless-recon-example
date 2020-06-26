@@ -49,14 +49,14 @@ func handler(request lambdaRequest) (lambdaResponse, error) {
 	}
 
 	var subdomains []string
-	otxResp := &alienVaultResponse{}
+	var response alienVaultResponse
 
-	err = json.NewDecoder(resp.Body).Decode(&otxResp)
+	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		return lambdaResponse{}, err
 	}
 
-	for _, record := range otxResp.PassiveDNS {
+	for _, record := range response.PassiveDNS {
 		// Discard IPv4 address hostnames.
 		if !isIpv4Address(record.Hostname) {
 			subdomains = append(subdomains, record.Hostname)
